@@ -54,6 +54,7 @@ function getHeader(req: Request, name: string): string | undefined {
  */
 export function authenticateApiKey(options: ExpressAdapterOptions): AsyncMiddleware {
   const headerName = options.apiKeyHeader ?? 'x-api-key'
+  const audit = options.audit ?? true
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -66,6 +67,20 @@ export function authenticateApiKey(options: ExpressAdapterOptions): AsyncMiddlew
       const apiKey = await options.ts.validateApiKey(token)
       req.tenantKey = apiKey
       req.tenantId = apiKey.tenant_id
+
+      // Automatic audit logging on successful auth
+      if (audit) {
+        options.ts.logAuditEvent({
+          tenant_id: apiKey.tenant_id,
+          actor_id: apiKey.key_record_id,
+          actor_type: 'admin_api',
+          action: 'api_key.authenticated',
+          resource: req.originalUrl ?? req.url,
+          ip: resolveClientIp(req, options),
+          user_agent: req.headers['user-agent'] ?? undefined,
+        }).catch(() => { /* fire-and-forget */ })
+      }
+
       next()
     } catch (err) {
       next(err)

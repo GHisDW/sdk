@@ -46,7 +46,7 @@ function createMockTenantScale(overrides: Record<string, Mock> = {}) {
       checkDailyLimit: vi.fn(),
       checkIpCreationLimit: vi.fn(),
     },
-    logAuditEvent: vi.fn(),
+    logAuditEvent: vi.fn().mockResolvedValue(undefined),
     getClientIp: vi.fn(),
     generateApiKey: vi.fn(),
     hashApiKey: vi.fn(),

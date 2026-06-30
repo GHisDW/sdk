@@ -11,6 +11,12 @@ export interface HonoAdapterOptions {
   ts: TenantScale
 
   /**
+   * Automatically log an audit event on successful API key authentication.
+   * @default true
+   */
+  audit?: boolean
+
+  /**
    * Context key for storing API key info.
    * @default 'apiKey'
    */

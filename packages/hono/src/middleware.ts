@@ -61,6 +61,7 @@ function getHeader(c: Context, name: string): string | undefined {
 export function authenticateApiKey(options: HonoAdapterOptions) {
   const headerName = options.apiKeyHeader ?? 'Authorization'
   const ctxKey = options.apiKeyContextKey ?? 'apiKey'
+  const audit = options.audit ?? true
 
   return async (c: Context, next: Next) => {
     const header = getHeader(c, headerName)
@@ -82,6 +83,19 @@ export function authenticateApiKey(options: HonoAdapterOptions) {
 
       c.set(ctxKey, keyInfo)
       c.set('tenantId', keyInfo.tenant_id)
+
+      // Automatic audit logging on successful auth
+      if (audit) {
+        options.ts.logAuditEvent({
+          tenant_id: keyInfo.tenant_id,
+          actor_id: keyInfo.key_record_id,
+          actor_type: 'admin_api',
+          action: 'api_key.authenticated',
+          resource: c.req.path,
+          ip: resolveClientIp(c),
+          user_agent: c.req.header('user-agent') ?? undefined,
+        }).catch(() => { /* fire-and-forget */ })
+      }
 
       await next()
     } catch (err) {

@@ -29,6 +29,12 @@ export interface ExpressAdapterOptions {
   ts: TenantScale
 
   /**
+   * Automatically log an audit event on successful API key authentication.
+   * @default true
+   */
+  audit?: boolean
+
+  /**
    * Header name for API key authentication.
    * @default 'x-api-key'
    */

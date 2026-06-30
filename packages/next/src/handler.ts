@@ -92,11 +92,36 @@ export interface HandlerFactory {
  * ```
  */
 export function createHandler(options: NextAdapterOptions): HandlerFactory {
+  const audit = options.audit ?? true
+
+  function getClientIp(request: Request): string | undefined {
+    return (
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      request.headers.get('x-real-ip') ??
+      request.headers.get('cf-connecting-ip') ??
+      undefined
+    )
+  }
+
   return {
     withApiKey(handler: ApiKeyHandler): NextRouteHandler {
       return async (request, routeParams) => {
         try {
           const { apiKey, tenantId } = await authenticateApiKey(request, options)
+
+          // Automatic audit logging on successful auth
+          if (audit) {
+            options.ts.logAuditEvent({
+              tenant_id: tenantId,
+              actor_id: apiKey.key_record_id,
+              actor_type: 'admin_api',
+              action: 'api_key.authenticated',
+              resource: request.url,
+              ip: getClientIp(request),
+              user_agent: request.headers.get('user-agent') ?? undefined,
+            }).catch(() => { /* fire-and-forget */ })
+          }
+
           return await handler(request, { apiKey, tenantId }, routeParams)
         } catch (err) {
           return errorResponse(err)
