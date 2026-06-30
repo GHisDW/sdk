@@ -18,6 +18,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "test": "vitest run",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
@@ -31,7 +32,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ThatDevMat/tenantscale.git",
+    "url": "https://github.com/TenantScale/sdk.git",
     "directory": "packages/sdk"
   },
   "keywords": [
