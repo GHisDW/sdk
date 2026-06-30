@@ -46,4 +46,11 @@ export default defineWorkspace([
       include: ['src/__tests__/**/*.test.ts', 'src/__tests__/**/*.test.tsx'],
     },
   },
+  {
+    test: {
+      name: 'create-app',
+      root: './packages/create-app',
+      include: ['src/__tests__/**/*.test.ts'],
+    },
+  },
 ])

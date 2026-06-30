@@ -18,6 +18,7 @@ Add tenant isolation, API key auth, plan enforcement, rate limiting, and audit l
 | [`@tenantscale/hono`](packages/hono) | [![npm](https://img.shields.io/badge/npm-published-blue)](https://www.npmjs.com/package/@tenantscale/hono) | Hono middleware adapters | ✅ |
 | [`@tenantscale/next`](packages/next) | [![npm](https://img.shields.io/badge/npm-published-blue)](https://www.npmjs.com/package/@tenantscale/next) | Next.js App Router wrappers | ✅ |
 | [`@tenantscale/react`](packages/react) | [![npm](https://img.shields.io/badge/npm-published-blue)](https://www.npmjs.com/package/@tenantscale/react) | React hooks — `useTenant`, `usePlan`, `useApiKeys` | ✅ |
+| [`create-tenantscale-app`](packages/create-app) | [![npm](https://img.shields.io/badge/npm-published-blue)](https://www.npmjs.com/package/create-tenantscale-app) | Scaffold a full-stack multi-tenant SaaS app | ✅ |
 | [`@tenantscale/cli`](packages/cli) | [![npm](https://img.shields.io/badge/npm-published-blue)](https://www.npmjs.com/package/@tenantscale/cli) | CLI tools — `init` + `migrate` | ✅ |
 
 ## Quick Start
