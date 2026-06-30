@@ -1,0 +1,44 @@
+{
+  "name": "@tenantscale/sdk",
+  "version": "0.1.0",
+  "description": "Framework-agnostic multi-tenant SDK for B2B SaaS — tenant isolation, audit logging, plan enforcement, and API key management.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "stripe": "^22.3.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ThatDevMat/tenantscale.git",
+    "directory": "packages/sdk"
+  },
+  "keywords": [
+    "multi-tenant",
+    "saas",
+    "tenant-isolation",
+    "b2b",
+    "supabase"
+  ]
+}

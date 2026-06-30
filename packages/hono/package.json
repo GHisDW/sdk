@@ -1,0 +1,32 @@
+{
+  "name": "@tenantscale/hono",
+  "version": "0.1.0",
+  "description": "Hono.js middleware adapter for TenantScale — API key auth, plan enforcement, rate limiting, audit logging",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tenantscale/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "hono": "^4.12.0",
+    "typescript": "^5.7.0"
+  },
+  "license": "MIT"
+}

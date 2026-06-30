@@ -1,0 +1,32 @@
+{
+  "name": "@tenantscale/next",
+  "version": "0.1.0",
+  "description": "Next.js App Router adapter for TenantScale — API key auth, plan enforcement, rate limiting, audit logging for Route Handlers",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tenantscale/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": "^14.0.0 || ^15.0.0"
+  },
+  "devDependencies": {
+    "next": "^15.0.0",
+    "typescript": "^5.7.0"
+  },
+  "license": "MIT"
+}

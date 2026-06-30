@@ -1,0 +1,10 @@
+{
+  "name": "express-basic",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.21.0",
+    "@supabase/supabase-js": "^2.49.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

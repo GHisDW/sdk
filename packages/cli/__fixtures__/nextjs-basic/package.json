@@ -1,0 +1,9 @@
+{
+  "name": "nextjs-basic",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "next": "^15.2.0",
+    "@supabase/supabase-js": "^2.49.0"
+  }
+}

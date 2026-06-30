@@ -1,0 +1,31 @@
+{
+  "name": "@tenantscale/cli",
+  "version": "0.1.0",
+  "description": "Scaffold multi-tenant SaaS projects with TenantScale",
+  "type": "module",
+  "bin": {
+    "tenantscale": "./dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "ora": "^8.2.0",
+    "picocolors": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.0",
+    "typescript": "5.9.3",
+    "vitest": "3.2.6"
+  }
+}
