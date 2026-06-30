@@ -1,0 +1,49 @@
+{
+  "name": "@tenantscale/react",
+  "version": "0.1.0",
+  "description": "React SDK for TenantScale — tenant context, plan features, API key management, and audit logging hooks",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.0.0",
+    "@types/react": "^19.0.0",
+    "jsdom": "^25.0.0",
+    "react": "^19.0.0",
+    "typescript": "5.9.3",
+    "vitest": "3.2.6"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TenantScale/sdk.git",
+    "directory": "packages/react"
+  },
+  "keywords": [
+    "multi-tenant",
+    "saas",
+    "react",
+    "hooks",
+    "tenant-isolation",
+    "b2b"
+  ]
+}

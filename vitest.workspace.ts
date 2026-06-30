@@ -39,4 +39,11 @@ export default defineWorkspace([
       include: ['src/__tests__/**/*.test.ts'],
     },
   },
+  {
+    test: {
+      name: 'react',
+      root: './packages/react',
+      include: ['src/__tests__/**/*.test.ts', 'src/__tests__/**/*.test.tsx'],
+    },
+  },
 ])
