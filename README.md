@@ -256,6 +256,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) to get started. Every contributor is reco
 - [Discord](https://discord.gg/wg5VZTNQ5) — questions, ideas, show-and-tell
 - [GitHub Discussions](https://github.com/TenantScale/sdk/discussions) — long-form Q&A
 
+## 📚 Related Repos
+
+- [`TenantScale/api`](https://github.com/TenantScale/api) — BSL 1.1 backend API (tenant CRUD, billing, admin)
+- [`TenantScale/portal`](https://github.com/TenantScale/portal) — Proprietary customer-facing Next.js portal
+
 ## 🔒 Security
 
 Found a vulnerability? See [SECURITY.md](SECURITY.md) for our disclosure process.
