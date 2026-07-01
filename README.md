@@ -162,7 +162,8 @@ All packages are **MIT-licensed** and published on npm.
 | [`@tenantscale/next`](packages/next) | <img src="https://img.shields.io/bundlephobia/minzip/@tenantscale/next" alt="size"> | Next.js App Router — `authenticateApiKey`, `createHandler`, `withApiKey` |
 | [`@tenantscale/react`](packages/react) | <img src="https://img.shields.io/bundlephobia/minzip/@tenantscale/react" alt="size"> | React hooks — `useTenant`, `usePlan`, `useApiKeys`, `useTeam`, `useAuditLog`, `useWebhooks` |
 | [`@tenantscale/cli`](packages/cli) | <img src="https://img.shields.io/bundlephobia/minzip/@tenantscale/cli" alt="size"> | CLI — `tenantscale init` to scaffold, `tenantscale migrate` to analyze existing apps |
-| [`create-tenantscale-app`](packages/create-app) | <img src="https://img.shields.io/bundlephobia/minzip/create-tenantscale-app" alt="size"> | Full-stack starter — scaffolds Next.js portal + Hono API + Supabase migrations in one command |
+| [`create-tenantscale-app`](packages/create-app) | <img src="https://img.shields.io/bundlephobia/minzip/create-tenantscale-app" alt="size"> | Full-stack starter — scaffolds Next.js portal + Hono API + Supabase migrations |
+| [`@tenantscale/mcp`](packages/mcp) | — | MCP server for AI tools — validate tenant queries, generate RLS policies, suggest endpoints |
 
 ---
 
