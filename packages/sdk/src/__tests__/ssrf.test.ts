@@ -87,7 +87,7 @@ describe('validateWebhookUrl', () => {
   // What it proves: URLs with complete path components are handled
   // Risk if missing: Complex webhook URLs with query params would fail
   it('handles URLs with query parameters', async () => {
-    const url = await validateWebhookUrl('http://example.com/hook?format=json&version=2')
+    const url = await validateWebhookUrl(`http://${PUBLIC_IP}/hook?format=json&version=2`)
     expect(url.searchParams.get('format')).toBe('json')
     expect(url.searchParams.get('version')).toBe('2')
   })
@@ -97,7 +97,7 @@ describe('validateWebhookUrl', () => {
   // What it proves: Non-standard ports are allowed
   // Risk if missing: Webhooks on custom ports would be blocked
   it('allows custom port numbers', async () => {
-    const url = await validateWebhookUrl('http://example.com:8443/hook')
+    const url = await validateWebhookUrl(`http://${PUBLIC_IP}:8443/hook`)
     expect(url.port).toBe('8443')
   })
 
