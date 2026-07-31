@@ -18,6 +18,8 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
+    "@clack/prompts": "^1.7.0",
+    "execa": "^9.5.2",
     "picocolors": "^1.1.0"
   },
   "devDependencies": {
