@@ -11,3 +11,5 @@ package-lock.json
 .env.local
 .env.*.local
 .hermes
+coverage-summary.json
+merge_simulation.txt

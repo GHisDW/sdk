@@ -30,7 +30,7 @@ import { describe, expect, it } from 'vitest'
 type PackageJson = {
   exports?: {
     '.': {
-      require?: string
+      require?: string | { types?: string; default?: string }
     }
   }
 }
@@ -53,6 +53,19 @@ describe('package export maps', () => {
       ) as PackageJson
 
       expect(packageJson.exports?.['.']?.require).toBe('./dist/index.cjs')
+    }
+  })
+
+  it('defines require condition for @tenantscale/prisma', () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(repoRoot, 'packages/prisma/package.json'), 'utf-8'),
+    ) as PackageJson
+
+    const requireCondition = packageJson.exports?.['.']?.require
+    expect(requireCondition).toBeDefined()
+    expect(typeof requireCondition === 'object' && requireCondition !== null).toBe(true)
+    if (typeof requireCondition === 'object' && requireCondition !== null) {
+      expect(requireCondition.default).toBe('./dist/cjs/index.js')
     }
   })
 })
