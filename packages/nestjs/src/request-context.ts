@@ -27,7 +27,10 @@ import type { TenantScaleRequestContext } from './types.js'
 
 const storage = new AsyncLocalStorage<TenantScaleRequestContext>()
 
-export function runWithTenantScaleContext<T>(context: TenantScaleRequestContext, callback: () => T): T {
+export function runWithTenantScaleContext<T>(
+  context: TenantScaleRequestContext,
+  callback: () => T,
+): T {
   return storage.run(context, callback)
 }
 

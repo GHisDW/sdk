@@ -29,10 +29,7 @@ import { TenantScaleGuard } from './tenant-scale.guard.js'
 export const AuthenticateApiKey = () => SetMetadata('tenantScale:authenticateApiKey', true)
 
 export const RequirePlanLimit = (feature: string) =>
-  applyDecorators(
-    SetMetadata('tenantScale:requirePlanLimit', feature),
-    UseGuards(TenantScaleGuard),
-  )
+  applyDecorators(SetMetadata('tenantScale:requirePlanLimit', feature), UseGuards(TenantScaleGuard))
 
 export const AuditLog = (options: { action: string; resource?: string }) =>
   SetMetadata('tenantScale:auditLog', options)

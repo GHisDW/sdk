@@ -39,13 +39,17 @@ export class TenantScaleGuard implements CanActivate {
     const handler = context.getHandler()
     const instance = context.getClass()
     const requiresAuth =
-      this.reflector.getAllAndOverride<boolean>('tenantScale:authenticateApiKey', [handler, instance]) ?? false
+      this.reflector.getAllAndOverride<boolean>('tenantScale:authenticateApiKey', [
+        handler,
+        instance,
+      ]) ?? false
 
     if (!requiresAuth) {
       return true
     }
 
-    const rawToken = req.headers?.['authorization']?.toString() ?? req.headers?.['x-api-key']?.toString()
+    const rawToken =
+      req.headers?.['authorization']?.toString() ?? req.headers?.['x-api-key']?.toString()
     if (!rawToken) {
       throw new UnauthorizedException('Authentication required')
     }
@@ -61,7 +65,10 @@ export class TenantScaleGuard implements CanActivate {
     req.tenant = tenant
     ;(req as unknown as Record<symbol, unknown>)[TENANT_SCALE_CONTEXT_TOKEN] = tenant
 
-    const planFeature = this.reflector.getAllAndOverride<string>('tenantScale:requirePlanLimit', [handler, instance])
+    const planFeature = this.reflector.getAllAndOverride<string>('tenantScale:requirePlanLimit', [
+      handler,
+      instance,
+    ])
     if (planFeature) {
       await this.tenantScaleService.requirePlanLimit(tenant.tenantId, planFeature, 1)
     }

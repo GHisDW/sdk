@@ -53,7 +53,13 @@ export class TenantScaleModule {
 
     return {
       module: TenantScaleModule,
-      providers: [tenantScaleProvider, optionsProvider, TenantScaleService, TenantScaleGuard, TenantScaleInterceptor],
+      providers: [
+        tenantScaleProvider,
+        optionsProvider,
+        TenantScaleService,
+        TenantScaleGuard,
+        TenantScaleInterceptor,
+      ],
       exports: [TenantScaleService, TENANT_SCALE_TOKEN, TenantScaleGuard, TenantScaleInterceptor],
     }
   }
@@ -76,7 +82,13 @@ export class TenantScaleModule {
 
     return {
       module: TenantScaleModule,
-      providers: [tenantScaleProvider, optionsProvider, TenantScaleService, TenantScaleGuard, TenantScaleInterceptor],
+      providers: [
+        tenantScaleProvider,
+        optionsProvider,
+        TenantScaleService,
+        TenantScaleGuard,
+        TenantScaleInterceptor,
+      ],
       exports: [TenantScaleService, TENANT_SCALE_TOKEN, TenantScaleGuard, TenantScaleInterceptor],
     }
   }

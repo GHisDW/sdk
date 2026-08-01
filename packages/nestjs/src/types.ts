@@ -49,7 +49,8 @@ export interface TenantScaleExecutionContext {
   [key: string]: unknown
 }
 
-export type TenantScaleModuleOptionsFactory = () => TenantScaleModuleOptions | Promise<TenantScaleModuleOptions>
+export type TenantScaleModuleOptionsFactory = () =>
+  TenantScaleModuleOptions | Promise<TenantScaleModuleOptions>
 
 export const TENANT_SCALE_TOKEN = Symbol('TENANT_SCALE_TOKEN')
 export const TENANT_SCALE_OPTIONS_TOKEN = Symbol('TENANT_SCALE_OPTIONS_TOKEN')

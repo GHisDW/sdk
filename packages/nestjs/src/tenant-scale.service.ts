@@ -22,7 +22,13 @@
  * SOFTWARE.
  */
 
-import { BadRequestException, ForbiddenException, Injectable, Inject, UnauthorizedException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Inject,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { TenantScale, AuthenticationError, TenantScaleError } from '@tenantscale/sdk'
 import { TENANT_SCALE_TOKEN, type TenantScaleModuleOptions } from './types.js'
 
@@ -54,7 +60,11 @@ export class TenantScaleService {
     }
   }
 
-  async requirePlanLimit(tenantId: string | undefined, feature: string, currentCount: number): Promise<void> {
+  async requirePlanLimit(
+    tenantId: string | undefined,
+    feature: string,
+    currentCount: number,
+  ): Promise<void> {
     if (!tenantId) {
       throw new BadRequestException('Tenant ID is required')
     }

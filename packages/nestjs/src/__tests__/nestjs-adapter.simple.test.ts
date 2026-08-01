@@ -13,15 +13,24 @@ class MockTenantScale extends TenantScale {
     super({ supabaseUrl: 'https://example.supabase.co', supabaseKey: 'service-role-key' } as never)
   }
 
-  override async validateApiKey(token: string): Promise<{ tenant_id: string; key_record_id: string }> {
-    return token === 'valid' ? { tenant_id: 'tenant-1', key_record_id: 'key-1' } : Promise.reject(new Error('Invalid key'))
+  override async validateApiKey(
+    token: string,
+  ): Promise<{ tenant_id: string; key_record_id: string }> {
+    return token === 'valid'
+      ? { tenant_id: 'tenant-1', key_record_id: 'key-1' }
+      : Promise.reject(new Error('Invalid key'))
   }
 }
 
 describe('TenantScale NestJS adapter', () => {
   it('registers the module and exposes the service', async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [TenantScaleModule.forRoot({ apiKey: 'test-key', tenantScale: new MockTenantScale() } as never)],
+      imports: [
+        TenantScaleModule.forRoot({
+          apiKey: 'test-key',
+          tenantScale: new MockTenantScale(),
+        } as never),
+      ],
     }).compile()
 
     const service = moduleRef.get(TenantScaleService)
@@ -31,7 +40,12 @@ describe('TenantScale NestJS adapter', () => {
 
   it('creates guard and interceptor instances', async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [TenantScaleModule.forRoot({ apiKey: 'test-key', tenantScale: new MockTenantScale() } as never)],
+      imports: [
+        TenantScaleModule.forRoot({
+          apiKey: 'test-key',
+          tenantScale: new MockTenantScale(),
+        } as never),
+      ],
     }).compile()
 
     const guard = moduleRef.get(TenantScaleGuard)

@@ -48,12 +48,19 @@ export class TenantScaleInterceptor implements NestInterceptor {
 
     const handler = context.getHandler()
     const instance = context.getClass()
-    const audit = this.reflector.getAllAndOverride<{ action: string; resource?: string }>('tenantScale:auditLog', [handler, instance])
+    const audit = this.reflector.getAllAndOverride<{ action: string; resource?: string }>(
+      'tenantScale:auditLog',
+      [handler, instance],
+    )
 
     return next.handle().pipe(
       tap(async () => {
         if (audit && req.tenant?.tenantId) {
-          await this.tenantScaleService.auditLog(req.tenant.tenantId, audit.action, audit.resource ?? 'request')
+          await this.tenantScaleService.auditLog(
+            req.tenant.tenantId,
+            audit.action,
+            audit.resource ?? 'request',
+          )
         }
       }),
     )
