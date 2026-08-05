@@ -31,7 +31,7 @@ import {
   TENANT_SCALE_OPTIONS_TOKEN,
   TENANT_SCALE_TOKEN,
   type TenantScaleModuleOptions,
-  type TenantScaleModuleOptionsFactory,
+  type TenantScaleModuleAsyncOptions,
 } from './types.js'
 
 @Module({})
@@ -40,9 +40,24 @@ export class TenantScaleModule {
     const tenantScaleProvider: Provider = {
       provide: TENANT_SCALE_TOKEN,
       useFactory: async () => {
-        if (options.tenantScale) return options.tenantScale
-        if (options.tenantScaleFactory) return options.tenantScaleFactory()
-        return new TenantScale(options as never)
+        if (options.tenantScale) {
+          return options.tenantScale
+        }
+        if (options.tenantScaleFactory) {
+          const instance = await options.tenantScaleFactory()
+          if (!(instance instanceof TenantScale)) {
+            throw new Error(
+              'TenantScaleModule: tenantScaleFactory must return a TenantScale instance',
+            )
+          }
+          return instance
+        }
+        if (options.sdkOptions) {
+          return new TenantScale(options.sdkOptions)
+        }
+        throw new Error(
+          'TenantScaleModule: Either tenantScale, tenantScaleFactory, or sdkOptions must be provided',
+        )
       },
     }
 
@@ -60,36 +75,68 @@ export class TenantScaleModule {
         TenantScaleGuard,
         TenantScaleInterceptor,
       ],
-      exports: [TenantScaleService, TENANT_SCALE_TOKEN, TenantScaleGuard, TenantScaleInterceptor],
+      exports: [
+        TenantScaleService,
+        TENANT_SCALE_TOKEN,
+        TENANT_SCALE_OPTIONS_TOKEN,
+        TenantScaleGuard,
+        TenantScaleInterceptor,
+      ],
     }
   }
 
-  static forRootAsync(optionsFactory: TenantScaleModuleOptionsFactory): DynamicModule {
+  static forRootAsync(asyncOptions: TenantScaleModuleAsyncOptions): DynamicModule {
     const tenantScaleProvider: Provider = {
       provide: TENANT_SCALE_TOKEN,
-      useFactory: async () => {
-        const options = await optionsFactory()
-        if (options.tenantScale) return options.tenantScale
-        if (options.tenantScaleFactory) return options.tenantScaleFactory()
-        return new TenantScale(options as never)
+      useFactory: async (options: TenantScaleModuleOptions) => {
+        if (options.tenantScale) {
+          return options.tenantScale
+        }
+        if (options.tenantScaleFactory) {
+          const instance = await options.tenantScaleFactory()
+          if (!(instance instanceof TenantScale)) {
+            throw new Error(
+              'TenantScaleModule: tenantScaleFactory must return a TenantScale instance',
+            )
+          }
+          return instance
+        }
+        if (options.sdkOptions) {
+          return new TenantScale(options.sdkOptions)
+        }
+        throw new Error(
+          'TenantScaleModule: Either tenantScale, tenantScaleFactory, or sdkOptions must be provided',
+        )
       },
+      inject: [TENANT_SCALE_OPTIONS_TOKEN],
     }
 
     const optionsProvider: Provider = {
       provide: TENANT_SCALE_OPTIONS_TOKEN,
-      useFactory: optionsFactory,
+      useFactory: async (...args: unknown[]) => {
+        return await asyncOptions.useFactory(...args)
+      },
+      inject: asyncOptions.inject || [],
     }
 
     return {
       module: TenantScaleModule,
+      global: asyncOptions.global || false,
       providers: [
         tenantScaleProvider,
         optionsProvider,
+        ...(asyncOptions.providers || []),
         TenantScaleService,
         TenantScaleGuard,
         TenantScaleInterceptor,
       ],
-      exports: [TenantScaleService, TENANT_SCALE_TOKEN, TenantScaleGuard, TenantScaleInterceptor],
+      exports: [
+        TenantScaleService,
+        TENANT_SCALE_TOKEN,
+        TENANT_SCALE_OPTIONS_TOKEN,
+        TenantScaleGuard,
+        TenantScaleInterceptor,
+      ],
     }
   }
 }

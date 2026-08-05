@@ -23,17 +23,66 @@
  */
 
 import { SetMetadata, applyDecorators, UseGuards } from '@nestjs/common'
-import { Reflector } from '@nestjs/core'
 import { TenantScaleGuard } from './tenant-scale.guard.js'
 
-export const AuthenticateApiKey = () => SetMetadata('tenantScale:authenticateApiKey', true)
+// Metadata keys (must match those in guard and interceptor)
+const AUTHENTICATE_API_KEY_METADATA = 'tenantScale:authenticateApiKey'
+const REQUIRE_PLAN_LIMIT_METADATA = 'tenantScale:requirePlanLimit'
+const REQUIRE_SCOPE_METADATA = 'tenantScale:requireScope'
+const AUDIT_LOG_METADATA = 'tenantScale:auditLog'
 
+/**
+ * Decorator to mark a route or controller as requiring API key authentication.
+ * Must be used with TenantScaleGuard.
+ *
+ * @example
+ * @AuthenticateApiKey()
+ * @Get('protected')
+ * protectedRoute() { ... }
+ */
+export const AuthenticateApiKey = () => SetMetadata(AUTHENTICATE_API_KEY_METADATA, true)
+
+/**
+ * Decorator to require specific plan limits for a route.
+ * Automatically applies TenantScaleGuard.
+ *
+ * @param feature - The plan feature to check (e.g., 'pro', 'enterprise')
+ *
+ * @example
+ * @RequirePlanLimit('pro')
+ * @Get('premium')
+ * premiumRoute() { ... }
+ */
 export const RequirePlanLimit = (feature: string) =>
-  applyDecorators(SetMetadata('tenantScale:requirePlanLimit', feature), UseGuards(TenantScaleGuard))
+  applyDecorators(SetMetadata(REQUIRE_PLAN_LIMIT_METADATA, feature), UseGuards(TenantScaleGuard))
 
-export const AuditLog = (options: { action: string; resource?: string }) =>
-  SetMetadata('tenantScale:auditLog', options)
+/**
+ * Decorator to require specific API key scopes for a route.
+ * Automatically applies TenantScaleGuard.
+ *
+ * @param scopes - Array of required scopes
+ *
+ * @example
+ * @RequireScope('read:users', 'write:users')
+ * @Get('users')
+ * getUsers() { ... }
+ */
+export const RequireScope = (...scopes: string[]) =>
+  applyDecorators(SetMetadata(REQUIRE_SCOPE_METADATA, scopes), UseGuards(TenantScaleGuard))
 
-export function createTenantScaleMetadataReflector(): Reflector {
-  return new Reflector()
-}
+/**
+ * Decorator to enable audit logging for a route.
+ * Works with TenantScaleInterceptor to log successful requests.
+ *
+ * @param options - Audit log configuration
+ *
+ * @example
+ * @AuditLog({ action: 'User Created', resource: 'users' })
+ * @Post('users')
+ * createUser() { ... }
+ */
+export const AuditLog = (options: {
+  action: string
+  resource?: string
+  details?: Record<string, unknown>
+}) => SetMetadata(AUDIT_LOG_METADATA, options)

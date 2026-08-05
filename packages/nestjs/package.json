@@ -1,7 +1,7 @@
 {
   "name": "@tenantscale/nestjs",
   "version": "0.1.0",
-  "description": "NestJS adapter for TenantScale — module, guard, interceptor, and decorators",
+  "description": "NestJS adapter for TenantScale — module registration, guards, interceptors, decorators, and dependency injection",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -22,8 +22,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@tenantscale/sdk": "workspace:*",
-    "rxjs": "^7.8.1"
+    "@tenantscale/sdk": "workspace:*"
   },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",
@@ -34,7 +33,7 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.1.2",
     "reflect-metadata": "^0.2.2",
     "tsup": "^8.5.1",
     "typescript": "^7.0.2"

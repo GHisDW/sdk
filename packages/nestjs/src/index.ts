@@ -22,10 +22,34 @@
  * SOFTWARE.
  */
 
-export * from './tenant-scale.module.js'
-export * from './tenant-scale.service.js'
-export * from './tenant-scale.guard.js'
-export * from './tenant-scale.interceptor.js'
-export * from './decorators.js'
-export * from './types.js'
-export * from './request-context.js'
+// Module
+export { TenantScaleModule } from './tenant-scale.module.js'
+
+// Service
+export { TenantScaleService } from './tenant-scale.service.js'
+
+// Guards & Interceptors
+export { TenantScaleGuard } from './tenant-scale.guard.js'
+export { TenantScaleInterceptor } from './tenant-scale.interceptor.js'
+
+// Decorators
+export { AuthenticateApiKey, RequirePlanLimit, RequireScope, AuditLog } from './decorators.js'
+
+// Parameter Decorators & Context
+export {
+  TenantContext,
+  TenantId,
+  runWithTenantScaleContext,
+  getTenantScaleContext,
+  setTenantScaleContext,
+} from './request-context.js'
+
+// Types
+export {
+  type TenantScaleModuleOptions,
+  type TenantScaleModuleAsyncOptions,
+  type TenantScaleRequestContext,
+  TENANT_SCALE_TOKEN,
+  TENANT_SCALE_OPTIONS_TOKEN,
+  TENANT_SCALE_CONTEXT_TOKEN,
+} from './types.js'

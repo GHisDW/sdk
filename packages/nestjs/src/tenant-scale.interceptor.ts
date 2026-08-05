@@ -22,46 +22,67 @@
  * SOFTWARE.
  */
 
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common'
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Observable } from 'rxjs'
-import { tap } from 'rxjs/operators'
-import { TENANT_SCALE_CONTEXT_TOKEN, type TenantScaleExecutionContext } from './types.js'
+import { tap, catchError } from 'rxjs/operators'
 import { TenantScaleService } from './tenant-scale.service.js'
+
+// Metadata key
+const AUDIT_LOG_METADATA = 'tenantScale:auditLog'
+
+interface AuditLogConfig {
+  action: string
+  resource?: string
+  details?: Record<string, unknown>
+}
 
 @Injectable()
 export class TenantScaleInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(TenantScaleInterceptor.name)
+
   constructor(
     private readonly reflector: Reflector,
     private readonly tenantScaleService: TenantScaleService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const req = context.switchToHttp().getRequest<TenantScaleExecutionContext['request']>()
-    if (!req.tenant) {
-      req.tenant = {
-        requestId: req.headers?.['x-request-id']?.toString(),
-      }
+    const handler = context.getHandler()
+    const classRef = context.getClass()
+
+    const auditConfig = this.reflector.getAllAndOverride<AuditLogConfig>(AUDIT_LOG_METADATA, [
+      handler,
+      classRef,
+    ])
+
+    if (!auditConfig) {
+      return next.handle()
     }
 
-    ;(req as unknown as Record<symbol, unknown>)[TENANT_SCALE_CONTEXT_TOKEN] = req.tenant
-
-    const handler = context.getHandler()
-    const instance = context.getClass()
-    const audit = this.reflector.getAllAndOverride<{ action: string; resource?: string }>(
-      'tenantScale:auditLog',
-      [handler, instance],
-    )
+    const req = context.switchToHttp().getRequest()
+    const tenantId = req.tenantId as string | undefined
 
     return next.handle().pipe(
       tap(async () => {
-        if (audit && req.tenant?.tenantId) {
-          await this.tenantScaleService.auditLog(
-            req.tenant.tenantId,
-            audit.action,
-            audit.resource ?? 'request',
-          )
+        if (tenantId) {
+          try {
+            await this.tenantScaleService.auditLog(
+              tenantId,
+              auditConfig.action,
+              auditConfig.resource ?? 'request',
+              auditConfig.details,
+            )
+          } catch (error) {
+            // Log audit failures but don't fail the request
+            this.logger.warn(
+              `Failed to log audit event: ${error instanceof Error ? error.message : String(error)}`,
+            )
+          }
         }
+      }),
+      catchError((error) => {
+        // Optionally log errors here
+        throw error
       }),
     )
   }
