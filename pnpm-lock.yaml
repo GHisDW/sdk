@@ -219,6 +219,9 @@ importers:
       '@tenantscale/sdk':
         specifier: workspace:*
         version: link:../sdk
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
     devDependencies:
       '@nestjs/common':
         specifier: ^11.0.0
