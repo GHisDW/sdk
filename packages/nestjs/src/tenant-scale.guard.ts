@@ -49,13 +49,29 @@ export class TenantScaleGuard implements CanActivate {
         classRef,
       ]) ?? false
 
-    if (!requiresAuth) {
+    // Check scope requirements
+    const requiredScopes = this.reflector.getAllAndOverride<string[]>(REQUIRE_SCOPE_METADATA, [
+      handler,
+      classRef,
+    ])
+
+    // Check plan limit requirements
+    const planFeature = this.reflector.getAllAndOverride<string>(REQUIRE_PLAN_LIMIT_METADATA, [
+      handler,
+      classRef,
+    ])
+
+    // Determine if authentication is required based on all relevant metadata
+    const authRequired =
+      requiresAuth || (requiredScopes && requiredScopes.length > 0) || !!planFeature
+
+    if (!authRequired) {
       return true
     }
 
     const req = context.switchToHttp().getRequest()
     const options = this.tenantScaleService.moduleOptions
-    const apiKeyHeader = options.apiKeyHeader ?? 'x-api-key'
+    const apiKeyHeader = options.apiKeyHeader ?? options.authHeader ?? 'x-api-key'
 
     const token = this.extractToken(req, apiKeyHeader)
     if (!token) {
@@ -65,8 +81,8 @@ export class TenantScaleGuard implements CanActivate {
     const apiKeyInfo = await this.tenantScaleService.authenticateApiKey(token)
 
     // Set tenant context on request (Express and Fastify both support this)
-    req.tenantKey = apiKeyInfo
-    req.tenantId = apiKeyInfo.tenant_id
+    ;(req as Record<string, unknown>).tenantKey = apiKeyInfo
+    ;(req as Record<string, unknown>).tenantId = apiKeyInfo.tenant_id
 
     // Set context in AsyncLocalStorage for async operations
     setTenantScaleContext({
@@ -75,19 +91,11 @@ export class TenantScaleGuard implements CanActivate {
     })
 
     // Check scope requirements
-    const requiredScopes = this.reflector.getAllAndOverride<string[]>(REQUIRE_SCOPE_METADATA, [
-      handler,
-      classRef,
-    ])
     if (requiredScopes && requiredScopes.length > 0) {
       this.tenantScaleService.requireScope(apiKeyInfo, ...requiredScopes)
     }
 
     // Check plan limit requirements
-    const planFeature = this.reflector.getAllAndOverride<string>(REQUIRE_PLAN_LIMIT_METADATA, [
-      handler,
-      classRef,
-    ])
     if (planFeature) {
       await this.tenantScaleService.requirePlanLimit(apiKeyInfo.tenant_id, planFeature, 1)
     }

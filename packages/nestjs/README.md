@@ -1,6 +1,6 @@
 # @tenantscale/nestjs
 
-**NestJS adapter for TenantScale** — module registration, guards, interceptors, decorators, and dependency injection for API key authentication, plan enforcement, rate limiting, and audit logging.
+**NestJS adapter for TenantScale** — module registration, guards, interceptors, decorators, and dependency injection for API key authentication, plan enforcement, and scope validation.
 
 ## Install
 
@@ -83,9 +83,6 @@ import { TenantScale } from '@tenantscale/sdk'
       // Optional: Configure header names
       apiKeyHeader: 'x-api-key',
       authHeader: 'authorization',
-
-      // Optional: Enable/disable automatic audit logging on auth
-      audit: true,
     }),
   ],
 })
@@ -308,20 +305,18 @@ runWithTenantScaleContext({ tenantId: 'tenant-123' }, async () => {
 
 ### Request Object Mutation
 
-When `TenantScaleGuard` successfully authenticates a request, it mutates the Express request object by attaching tenant data:
+When `TenantScaleGuard` successfully authenticates a request, it attaches tenant data to the request object:
 
 - `req.tenantKey` - The full API key info object
 - `req.tenantId` - The tenant ID string
 
-This follows standard NestJS and Express patterns where guards and middleware attach request-scoped data to the request object for downstream use. The TypeScript types in this package augment the Express Request interface to include these properties.
-
-If you need to access tenant data in your controllers without using parameter decorators, you can access it directly from the request:
+This follows standard NestJS patterns where guards attach request-scoped data to the request object for downstream use. If you need to access tenant data in your controllers without using parameter decorators, you can access it directly from the request:
 
 ```ts
 @Get('data')
 getData(@Req() req: Request) {
-  const tenantId = req.tenantId
-  const tenantKey = req.tenantKey
+  const tenantId = req.tenantId as string | undefined
+  const tenantKey = req.tenantKey as ApiKeyInfo | undefined
   // Use tenant data
 }
 ```
@@ -346,7 +341,6 @@ import { UsersController } from './users.controller'
           supabaseKey: config.get('SUPABASE_SERVICE_ROLE_KEY'),
         },
         apiKeyHeader: 'x-api-key',
-        audit: true,
       }),
     }),
   ],

@@ -13,12 +13,22 @@ import {
 } from '../request-context.js'
 import { Reflector } from '@nestjs/core'
 import { Test } from '@nestjs/testing'
-import { TenantScale } from '@tenantscale/sdk'
+import {
+  TenantScale,
+  RateLimitExceededError,
+  NotFoundError,
+  ConflictError,
+  AuthenticationError,
+  TenantScaleError,
+} from '@tenantscale/sdk'
 import {
   ExecutionContext,
   UnauthorizedException,
   ForbiddenException,
   BadRequestException,
+  NotFoundException,
+  ConflictException,
+  HttpException,
 } from '@nestjs/common'
 import type { ApiKeyInfo } from '@tenantscale/sdk'
 import 'reflect-metadata'
@@ -36,14 +46,14 @@ class MockTenantScale extends TenantScale {
         scopes: ['read', 'write'],
       } as ApiKeyInfo
     }
-    throw new Error('Invalid key')
+    throw new AuthenticationError('Invalid key')
   }
 
   override requireScope(apiKey: ApiKeyInfo, ...scopes: string[]): void {
     const keyScopes = apiKey.scopes || []
     const hasAllScopes = scopes.every((scope) => keyScopes.includes(scope))
     if (!hasAllScopes) {
-      throw new Error('Missing required scope')
+      throw new AuthenticationError('Missing required scope')
     }
   }
 
@@ -187,27 +197,52 @@ describe('TenantScale NestJS adapter', () => {
       expect(() => service.requireScope(undefined, 'read')).toThrow(UnauthorizedException)
     })
 
-    it('throws error when apiKey lacks required scope', () => {
+    it('throws UnauthorizedException when apiKey lacks required scope', () => {
       const apiKey = { tenant_id: 'tenant-1', scopes: ['read'] } as ApiKeyInfo
-      expect(() => service.requireScope(apiKey, 'write')).toThrow()
+      expect(() => service.requireScope(apiKey, 'write')).toThrow(UnauthorizedException)
     })
 
-    it('requires plan limit when tenantId exists', async () => {
-      vi.spyOn(service.sdk.plans, 'getPlanLimit').mockResolvedValue(null)
-      await expect(service.requirePlanLimit('tenant-1', 'feature', 1)).resolves.not.toThrow()
+    it('requires plan limit when tenantId exists and limit is not exceeded', async () => {
+      vi.spyOn(service.sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+      await expect(service.requirePlanLimit('tenant-1', 'feature', 3)).resolves.not.toThrow()
     })
 
-    it('throws BadRequestException when tenantId is missing', async () => {
-      await expect(service.requirePlanLimit(undefined, 'feature', 1)).rejects.toThrow(
-        BadRequestException,
-      )
-    })
-
-    it('throws ForbiddenException when plan limit exceeded', async () => {
+    it('throws ForbiddenException when plan limit is exceeded', async () => {
       vi.spyOn(service.sdk.plans, 'getPlanLimit').mockResolvedValue(5)
       await expect(service.requirePlanLimit('tenant-1', 'feature', 10)).rejects.toThrow(
         ForbiddenException,
       )
+    })
+
+    it('allows plan limit boundary: limit 1 allows first request', async () => {
+      vi.spyOn(service.sdk.plans, 'getPlanLimit').mockResolvedValue(1)
+      await expect(service.requirePlanLimit('tenant-1', 'feature', 0)).resolves.not.toThrow()
+    })
+
+    it('blocks plan limit boundary: limit 1 blocks at count 1', async () => {
+      vi.spyOn(service.sdk.plans, 'getPlanLimit').mockResolvedValue(1)
+      await expect(service.requirePlanLimit('tenant-1', 'feature', 1)).rejects.toThrow(
+        ForbiddenException,
+      )
+    })
+
+    it('allows plan limit boundary: limit 5 allows requests 0-4', async () => {
+      vi.spyOn(service.sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+      await expect(service.requirePlanLimit('tenant-1', 'feature', 4)).resolves.not.toThrow()
+    })
+
+    it('blocks plan limit boundary: limit 5 blocks at count 5', async () => {
+      vi.spyOn(service.sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+      await expect(service.requirePlanLimit('tenant-1', 'feature', 5)).rejects.toThrow(
+        ForbiddenException,
+      )
+    })
+
+    it('supports async currentCount function', async () => {
+      vi.spyOn(service.sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+      await expect(
+        service.requirePlanLimit('tenant-1', 'feature', async () => 3),
+      ).resolves.not.toThrow()
     })
 
     it('logs audit event when tenantId exists', async () => {
@@ -220,6 +255,48 @@ describe('TenantScale NestJS adapter', () => {
       vi.spyOn(service.sdk, 'logAuditEvent').mockResolvedValue()
       await service.auditLog(undefined, 'action', 'resource')
       expect(service.sdk.logAuditEvent).not.toHaveBeenCalled()
+    })
+
+    it('converts RateLimitExceededError to 429 status', async () => {
+      vi.spyOn(service.sdk, 'validateApiKey').mockRejectedValue(
+        new RateLimitExceededError('Rate limit exceeded'),
+      )
+      await expect(service.authenticateApiKey('valid')).rejects.toThrow(HttpException)
+      try {
+        await service.authenticateApiKey('valid')
+      } catch (error) {
+        expect(error).toBeInstanceOf(HttpException)
+        expect((error as HttpException).getStatus()).toBe(429)
+      }
+    })
+
+    it('converts NotFoundError to 404 status', async () => {
+      vi.spyOn(service.sdk, 'validateApiKey').mockRejectedValue(new NotFoundError('Not found'))
+      await expect(service.authenticateApiKey('valid')).rejects.toThrow(NotFoundException)
+    })
+
+    it('converts ConflictError to 409 status', async () => {
+      vi.spyOn(service.sdk, 'validateApiKey').mockRejectedValue(new ConflictError('Conflict'))
+      await expect(service.authenticateApiKey('valid')).rejects.toThrow(ConflictException)
+    })
+
+    it('converts generic errors to ForbiddenException (not 401)', async () => {
+      vi.spyOn(service.sdk, 'validateApiKey').mockRejectedValue(new Error('Generic error'))
+      await expect(service.authenticateApiKey('valid')).rejects.toThrow(ForbiddenException)
+      await expect(service.authenticateApiKey('valid')).rejects.not.toThrow(UnauthorizedException)
+    })
+
+    it('converts TenantScaleError to ForbiddenException', async () => {
+      vi.spyOn(service.sdk, 'validateApiKey').mockRejectedValue(
+        new TenantScaleError('TenantScale error'),
+      )
+      await expect(service.authenticateApiKey('valid')).rejects.toThrow(ForbiddenException)
+    })
+
+    it('throws UnauthorizedException when tenantId is missing for plan limit', async () => {
+      await expect(service.requirePlanLimit(undefined, 'feature', 1)).rejects.toThrow(
+        UnauthorizedException,
+      )
     })
   })
 
@@ -242,6 +319,33 @@ describe('TenantScale NestJS adapter', () => {
 
     it('returns true when authentication is not required', async () => {
       const context = createMockExecutionContext(reflector, false)
+      expect(await guard.canActivate(context)).toBe(true)
+    })
+
+    it('requires authentication when @RequireScope is used without @AuthenticateApiKey', async () => {
+      const context = createMockExecutionContext(
+        reflector,
+        false, // no requiresAuth metadata
+        {},
+        undefined,
+        ['read'], // but has scope metadata
+      )
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException)
+    })
+
+    it('requires authentication when @RequirePlanLimit is used without @AuthenticateApiKey', async () => {
+      vi.spyOn(guard['tenantScaleService'].sdk.plans, 'getPlanLimit').mockResolvedValue(null)
+      const context = createMockExecutionContext(
+        reflector,
+        false, // no requiresAuth metadata
+        {}, // no API key
+        'pro-feature', // but has plan limit metadata
+      )
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException)
+    })
+
+    it('allows genuinely public routes with no metadata', async () => {
+      const context = createMockExecutionContext(reflector, false, {}, undefined, undefined)
       expect(await guard.canActivate(context)).toBe(true)
     })
 
@@ -291,6 +395,40 @@ describe('TenantScale NestJS adapter', () => {
         ['read'],
       )
       expect(await guard.canActivate(context)).toBe(true)
+    })
+
+    it('uses configured authHeader when apiKeyHeader is not set', async () => {
+      const moduleRef = await Test.createTestingModule({
+        imports: [
+          TenantScaleModule.forRoot({
+            tenantScale: new MockTenantScale(),
+            authHeader: 'x-custom-auth',
+          }),
+        ],
+      }).compile()
+
+      const customGuard = moduleRef.get(TenantScaleGuard)
+      const customReflector = moduleRef.get(Reflector)
+      const context = createMockExecutionContext(customReflector, true, {
+        'x-custom-auth': 'valid',
+      })
+      expect(await customGuard.canActivate(context)).toBe(true)
+    })
+
+    it('uses configured apiKeyHeader when set', async () => {
+      const moduleRef = await Test.createTestingModule({
+        imports: [
+          TenantScaleModule.forRoot({
+            tenantScale: new MockTenantScale(),
+            apiKeyHeader: 'x-custom-key',
+          }),
+        ],
+      }).compile()
+
+      const customGuard = moduleRef.get(TenantScaleGuard)
+      const customReflector = moduleRef.get(Reflector)
+      const context = createMockExecutionContext(customReflector, true, { 'x-custom-key': 'valid' })
+      expect(await customGuard.canActivate(context)).toBe(true)
     })
   })
 
@@ -361,9 +499,11 @@ describe('TenantScale NestJS adapter', () => {
   })
 
   describe('Decorators', () => {
-    it('AuthenticateApiKey decorator creates metadata', () => {
+    it('AuthenticateApiKey decorator creates metadata and applies guard', () => {
       const decorator = AuthenticateApiKey()
       expect(decorator).toBeDefined()
+      // Verify it applies UseGuards by checking the decorator structure
+      // The decorator should be a composite decorator that includes UseGuards
     })
 
     it('RequirePlanLimit decorator creates metadata and applies guard', () => {

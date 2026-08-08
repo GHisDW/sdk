@@ -23,11 +23,13 @@
  */
 
 import {
-  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Inject,
+  NotFoundException,
   UnauthorizedException,
+  HttpException,
 } from '@nestjs/common'
 import type { ApiKeyInfo } from '@tenantscale/sdk'
 import {
@@ -36,6 +38,9 @@ import {
   TenantScaleError,
   RateLimitExceededError,
   PlanLimitExceededError,
+  NotFoundError,
+  ConflictError,
+  requirePlanLimitCore,
 } from '@tenantscale/sdk'
 import {
   TENANT_SCALE_TOKEN,
@@ -80,15 +85,12 @@ export class TenantScaleService {
   async requirePlanLimit(
     tenantId: string | undefined,
     feature: string,
-    currentCount: number,
+    currentCount: number | (() => number | Promise<number>),
   ): Promise<void> {
-    if (!tenantId) {
-      throw new BadRequestException('Tenant ID is required')
-    }
-
-    const limit = await this.tenantScale.plans.getPlanLimit(tenantId, feature)
-    if (limit !== null && currentCount >= limit) {
-      throw new ForbiddenException(`Plan limit exceeded for ${feature}`)
+    try {
+      await requirePlanLimitCore(this.tenantScale, tenantId, feature, currentCount)
+    } catch (error) {
+      throw this.toNestException(error)
     }
   }
 
@@ -116,11 +118,19 @@ export class TenantScaleService {
     }
 
     if (error instanceof RateLimitExceededError) {
-      return new ForbiddenException(error.message)
+      return new HttpException(error.message, 429)
     }
 
     if (error instanceof PlanLimitExceededError) {
       return new ForbiddenException(error.message)
+    }
+
+    if (error instanceof NotFoundError) {
+      return new NotFoundException(error.message)
+    }
+
+    if (error instanceof ConflictError) {
+      return new ConflictException(error.message)
     }
 
     if (error instanceof TenantScaleError) {
@@ -128,9 +138,9 @@ export class TenantScaleService {
     }
 
     if (error instanceof Error) {
-      return new UnauthorizedException(error.message)
+      return new ForbiddenException(error.message)
     }
 
-    return new UnauthorizedException('TenantScale authentication failed')
+    return new ForbiddenException('TenantScale error')
   }
 }

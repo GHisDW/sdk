@@ -33,14 +33,15 @@ const AUDIT_LOG_METADATA = 'tenantScale:auditLog'
 
 /**
  * Decorator to mark a route or controller as requiring API key authentication.
- * Must be used with TenantScaleGuard.
+ * Automatically applies TenantScaleGuard.
  *
  * @example
  * @AuthenticateApiKey()
  * @Get('protected')
  * protectedRoute() { ... }
  */
-export const AuthenticateApiKey = () => SetMetadata(AUTHENTICATE_API_KEY_METADATA, true)
+export const AuthenticateApiKey = () =>
+  applyDecorators(SetMetadata(AUTHENTICATE_API_KEY_METADATA, true), UseGuards(TenantScaleGuard))
 
 /**
  * Decorator to require specific plan limits for a route.

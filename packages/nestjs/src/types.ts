@@ -25,8 +25,9 @@
 import type { TenantScale, TenantScaleOptions, ApiKeyInfo } from '@tenantscale/sdk'
 import type { Provider, InjectionToken } from '@nestjs/common'
 
-// ── NestJS Request Augmentation (Express platform) ──
-
+// ── Request Augmentation (Express platform) ──
+// Type augmentation for Express Request interface
+// This is optional and only applies when using Express platform
 declare global {
   namespace Express {
     interface Request {
