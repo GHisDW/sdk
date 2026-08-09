@@ -25,7 +25,6 @@ import {
   ExecutionContext,
   UnauthorizedException,
   ForbiddenException,
-  BadRequestException,
   NotFoundException,
   ConflictException,
   HttpException,
