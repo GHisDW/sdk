@@ -1,6 +1,6 @@
 # @tenantscale/nestjs
 
-**NestJS adapter for TenantScale** — module registration, guards, interceptors, decorators, and dependency injection for API key authentication, plan enforcement, and scope validation.
+**NestJS adapter for TenantScale** — module registration, guards, interceptors, decorators, and dependency injection for API key authentication, plan enforcement, scope validation, and audit logging.
 
 ## Install
 
@@ -239,6 +239,22 @@ Requires a specific plan feature. Automatically applies the guard:
 async premiumFeature() { }
 ```
 
+You can optionally provide a current count to enforce specific limits:
+
+```ts
+@Get()
+@RequirePlanLimit('pro', 3)
+async premiumFeature() { }
+```
+
+Or use a function to dynamically calculate the count from the request:
+
+```ts
+@Post('items')
+@RequirePlanLimit('pro', (req) => req.body.items.length)
+async createItems() { }
+```
+
 ### @RequireScope
 
 Requires specific API key scopes. Automatically applies the guard:
@@ -402,13 +418,13 @@ export class UsersController {
 - `moduleOptions: TenantScaleModuleOptions` - Access to module configuration
 - `authenticateApiKey(token: string): Promise<ApiKeyInfo>` - Validate an API key
 - `requireScope(apiKey: ApiKeyInfo, ...scopes: string[]): void` - Check if API key has required scopes
-- `requirePlanLimit(tenantId: string, feature: string, currentCount: number): Promise<void>` - Check plan limits
+- `requirePlanLimit(tenantId: string, feature: string, currentCount: number | (() => number | Promise<number>)): Promise<void>` - Check plan limits
 - `auditLog(tenantId: string, action: string, resource: string, details?: Record<string, unknown>): Promise<void>` - Log an audit event
 
 ### Decorators
 
 - `@AuthenticateApiKey()` - Require API key authentication
-- `@RequirePlanLimit(feature: string)` - Require specific plan feature
+- `@RequirePlanLimit(feature: string, currentCount?: number | ((req: unknown) => number | Promise<number>))` - Require specific plan feature
 - `@RequireScope(...scopes: string[])` - Require specific API key scopes
 - `@AuditLog(config: { action: string; resource?: string; details?: Record<string, unknown> })` - Enable audit logging
 
@@ -425,7 +441,7 @@ export class UsersController {
 
 ## Limitations
 
-- **Platform Support**: Optimized for Express-based NestJS applications. Fastify is not officially tested or supported.
+- **Platform Support**: Works with both Express and Fastify-based NestJS applications. The guard uses platform-agnostic request handling.
 - **Request-Scoped Providers**: The TenantScale instance is a singleton. If you need request-scoped behavior, use the AsyncLocalStorage context functions.
 - **Concurrent Requests**: AsyncLocalStorage ensures context isolation for concurrent requests, but be careful when using background jobs that may outlive the request.
 

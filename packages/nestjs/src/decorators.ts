@@ -48,14 +48,26 @@ export const AuthenticateApiKey = () =>
  * Automatically applies TenantScaleGuard.
  *
  * @param feature - The plan feature to check (e.g., 'pro', 'enterprise')
+ * @param currentCount - Current count for the plan limit. Can be a number or a function that receives the request.
  *
  * @example
  * @RequirePlanLimit('pro')
  * @Get('premium')
  * premiumRoute() { ... }
+ *
+ * @example
+ * @RequirePlanLimit('pro', (req) => req.body.items.length)
+ * @Post('items')
+ * createItems() { ... }
  */
-export const RequirePlanLimit = (feature: string) =>
-  applyDecorators(SetMetadata(REQUIRE_PLAN_LIMIT_METADATA, feature), UseGuards(TenantScaleGuard))
+export const RequirePlanLimit = (
+  feature: string,
+  currentCount?: number | ((req: unknown) => number | Promise<number>),
+) =>
+  applyDecorators(
+    SetMetadata(REQUIRE_PLAN_LIMIT_METADATA, { feature, currentCount }),
+    UseGuards(TenantScaleGuard),
+  )
 
 /**
  * Decorator to require specific API key scopes for a route.

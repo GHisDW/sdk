@@ -338,7 +338,7 @@ describe('TenantScale NestJS adapter', () => {
         reflector,
         false, // no requiresAuth metadata
         {}, // no API key
-        'pro-feature', // but has plan limit metadata
+        { feature: 'pro-feature' }, // but has plan limit metadata
       )
       await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException)
     })
@@ -380,7 +380,7 @@ describe('TenantScale NestJS adapter', () => {
         reflector,
         true,
         { 'x-api-key': 'valid' },
-        'pro-feature',
+        { feature: 'pro-feature' },
       )
       expect(await guard.canActivate(context)).toBe(true)
     })
@@ -428,6 +428,80 @@ describe('TenantScale NestJS adapter', () => {
       const customReflector = moduleRef.get(Reflector)
       const context = createMockExecutionContext(customReflector, true, { 'x-custom-key': 'valid' })
       expect(await customGuard.canActivate(context)).toBe(true)
+    })
+
+    it('passes correct current count to service when using RequirePlanLimit with static count', async () => {
+      vi.spyOn(guard['tenantScaleService'].sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+      const requirePlanLimitSpy = vi.spyOn(guard['tenantScaleService'], 'requirePlanLimit')
+
+      const context = createMockExecutionContext(
+        reflector,
+        true,
+        { 'x-api-key': 'valid' },
+        { feature: 'pro-feature', currentCount: 3 },
+      )
+
+      expect(await guard.canActivate(context)).toBe(true)
+      expect(requirePlanLimitSpy).toHaveBeenCalledWith('tenant-1', 'pro-feature', 3)
+    })
+
+    it('passes correct current count to service when using RequirePlanLimit with count function', async () => {
+      vi.spyOn(guard['tenantScaleService'].sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+      const requirePlanLimitSpy = vi.spyOn(guard['tenantScaleService'], 'requirePlanLimit')
+
+      const countFn = (req: unknown) => 4
+      const context = createMockExecutionContext(
+        reflector,
+        true,
+        { 'x-api-key': 'valid' },
+        { feature: 'pro-feature', currentCount: countFn },
+      )
+
+      expect(await guard.canActivate(context)).toBe(true)
+      expect(requirePlanLimitSpy).toHaveBeenCalledWith('tenant-1', 'pro-feature', 4)
+    })
+
+    it('defaults to 0 when RequirePlanLimit is used without current count', async () => {
+      vi.spyOn(guard['tenantScaleService'].sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+      const requirePlanLimitSpy = vi.spyOn(guard['tenantScaleService'], 'requirePlanLimit')
+
+      const context = createMockExecutionContext(
+        reflector,
+        true,
+        { 'x-api-key': 'valid' },
+        { feature: 'pro-feature' },
+      )
+
+      expect(await guard.canActivate(context)).toBe(true)
+      expect(requirePlanLimitSpy).toHaveBeenCalledWith('tenant-1', 'pro-feature', 0)
+    })
+
+    it('handles backward compatibility when RequirePlanLimit is used with old string format', async () => {
+      vi.spyOn(guard['tenantScaleService'].sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+      const requirePlanLimitSpy = vi.spyOn(guard['tenantScaleService'], 'requirePlanLimit')
+
+      const context = createMockExecutionContext(
+        reflector,
+        true,
+        { 'x-api-key': 'valid' },
+        'pro-feature',
+      )
+
+      expect(await guard.canActivate(context)).toBe(true)
+      expect(requirePlanLimitSpy).toHaveBeenCalledWith('tenant-1', 'pro-feature', 0)
+    })
+
+    it('blocks request when plan limit is exceeded with provided count', async () => {
+      vi.spyOn(guard['tenantScaleService'].sdk.plans, 'getPlanLimit').mockResolvedValue(5)
+
+      const context = createMockExecutionContext(
+        reflector,
+        true,
+        { 'x-api-key': 'valid' },
+        { feature: 'pro-feature', currentCount: 10 },
+      )
+
+      await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException)
     })
   })
 
@@ -598,7 +672,9 @@ function createMockExecutionContext(
   reflector: Reflector,
   requiresAuth: boolean,
   headers: Record<string, string> = {},
-  planFeature?: string,
+  planFeature?:
+    | string
+    | { feature: string; currentCount?: number | ((req: unknown) => number | Promise<number>) },
   scopes?: string[],
   auditConfig?: { action: string; resource?: string },
 ): ExecutionContext {

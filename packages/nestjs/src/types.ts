@@ -25,21 +25,6 @@
 import type { TenantScale, TenantScaleOptions, ApiKeyInfo } from '@tenantscale/sdk'
 import type { Provider, InjectionToken } from '@nestjs/common'
 
-// ── Request Augmentation (Express platform) ──
-// Type augmentation for Express Request interface
-// This is optional and only applies when using Express platform
-declare global {
-  namespace Express {
-    interface Request {
-      /** Resolved API key info (set by TenantScaleGuard) */
-      tenantKey?: ApiKeyInfo
-
-      /** Resolved tenant ID — populated from API key authentication */
-      tenantId?: string
-    }
-  }
-}
-
 // ── Module Options ──
 
 export interface TenantScaleModuleOptions {
