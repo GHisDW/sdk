@@ -19,7 +19,8 @@
     "build": "tsc && tsup src/index.ts --format cjs --out-dir dist --clean false",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "lint": "oxlint src/"
   },
   "dependencies": {
     "@tenantscale/sdk": "workspace:*"
@@ -28,8 +29,8 @@
     "hono": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2",
-    "hono": "^4.12.33",
+    "@types/node": "^26.2.0",
+    "hono": "^4.13.3",
     "tsup": "^8.5.1",
     "typescript": "^7.0.2"
   },

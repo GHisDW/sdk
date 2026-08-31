@@ -17,7 +17,8 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "lint": "oxlint src/"
   },
   "dependencies": {
     "commander": "^15.0.0",
@@ -25,9 +26,9 @@
     "picocolors": "^1.1.0"
   },
   "devDependencies": {
-    "@types/node": "26.1.2",
+    "@types/node": "26.2.0",
     "typescript": "7.0.2",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   },
   "license": "MIT",
   "repository": {
