@@ -57,7 +57,8 @@ export class TenantScaleGuard implements CanActivate {
 
     // Check plan limit requirements
     const planLimitConfig = this.reflector.getAllAndOverride<
-      { feature: string; currentCount?: number | ((req: unknown) => number | Promise<number>) } | string
+      | { feature: string; currentCount?: number | ((req: unknown) => number | Promise<number>) }
+      | string
     >(REQUIRE_PLAN_LIMIT_METADATA, [handler, classRef])
 
     // Determine if authentication is required based on all relevant metadata
@@ -96,15 +97,20 @@ export class TenantScaleGuard implements CanActivate {
 
     // Check plan limit requirements
     if (planLimitConfig) {
-      const feature = typeof planLimitConfig === 'string' ? planLimitConfig : planLimitConfig.feature
+      const feature =
+        typeof planLimitConfig === 'string' ? planLimitConfig : planLimitConfig.feature
       const currentCount =
         typeof planLimitConfig === 'string'
           ? 0
           : typeof planLimitConfig.currentCount === 'function'
             ? planLimitConfig.currentCount(req)
-            : planLimitConfig.currentCount ?? 0
+            : (planLimitConfig.currentCount ?? 0)
 
-      await this.tenantScaleService.requirePlanLimit(apiKeyInfo.tenant_id, feature, currentCount)
+      await this.tenantScaleService.requirePlanLimit(
+        apiKeyInfo.tenant_id,
+        feature,
+        typeof currentCount === 'number' ? currentCount : await currentCount,
+      )
     }
 
     return true

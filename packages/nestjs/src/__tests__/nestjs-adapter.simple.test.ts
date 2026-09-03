@@ -449,7 +449,7 @@ describe('TenantScale NestJS adapter', () => {
       vi.spyOn(guard['tenantScaleService'].sdk.plans, 'getPlanLimit').mockResolvedValue(5)
       const requirePlanLimitSpy = vi.spyOn(guard['tenantScaleService'], 'requirePlanLimit')
 
-      const countFn = (req: unknown) => 4
+      const countFn = (_req: unknown) => 4
       const context = createMockExecutionContext(
         reflector,
         true,
